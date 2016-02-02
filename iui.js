@@ -5,141 +5,167 @@ var m = function() {
   return res;
 }
 var MarkdownEditor = React.createClass({
-onInput: function(text, moveTextarea) {
-  this.setState({ text: text }, function() {
-    moveTextarea(this.refs.marked);
-  });
-},
-getInitialState: function() {
-  return {text: 'Type some *markdown* here!'};
-},
-rawMarkup: function() {
-  // this.state.marked = marked(this.state.text, {sanitize: true});
-  return { __html:  marked(this.state.text, {sanitize: true})};
-},
-render: function() {
-  var childStyle = {
-    opacity: 0.6,
-    fontFamily: 'sans-serif',
-    fontSize: '1em',
-    width: '100%',
-    border: '1px solid blue'
-    // height: '100%'
+  onInput: function(text) {
+    this.setState({ text: text }, function() {
+      
+      // moveTextarea(this.refs.marked);
+    });
+  },
+  setSelection: function(startOffset, endOffset) {
+    console.log('startOffset: '+startOffset);
+    console.log('endOffset: '+endOffset);
+    this.setState({
+      startOffset: startOffset,
+      endOffset: endOffset
+    });
+  },
+  getInitialState: function() {
+    return {text: 'Type some *markdown* here!'};
+  },
+  rawMarkup: function() {
+    // this.state.marked = marked(this.state.text, {sanitize: true});
+    return { __html:  marked(this.state.text, {sanitize: true})};
+  },
+  render: function() {
+    var childStyle = {
+      // opacity: 0.6,
+      fontFamily: 'sans-serif',
+      fontSize: '1em',
+      width: '100%',
+      border: '1px solid blue'
+      // height: '100%'
+    }
+    return (
+      <div className="MarkdownEditor">
+        <MarkedArea
+          rawMarkup={this.rawMarkup}
+          text = {this.state.text}
+          setSelection = {this.setSelection} />
+        <Textarea
+          style = {childStyle}
+          onInput = {this.onInput}
+          text = {this.state.text}
+          startOffset = {this.state.startOffset}
+          endOffset = {this.state.endOffset} />
+      </div>
+    );
   }
-  return (
-    <div className="MarkdownEditor">
-      <div ref="marked"
-        style={m(
-          childStyle,
-          { }
-        )}
-        className="content"
-        dangerouslySetInnerHTML={this.rawMarkup()}/>
-      <Textarea
-        style = {childStyle}
-        onInput = {this.onInput}
-        text = {this.state.text} />
-      <MarkTag />
-    </div>
-  );
-}
 });
 
 var Textarea = React.createClass({
-handleChange: function(evt) {
-  var textarea = evt.target;
-  var text = textarea.value;
-  var mirror = this.refs.mirror;
+  handleChange: function(evt) {
+    var textarea = evt.target;
+    var text = textarea.value;
+    // var mirror = this.refs.mirror;
 
-  var getMapping = function(richText) {
-    var map = [];
-    var j = 0;
-    for(var i = 0, len = text.length; i < len; i++) {
-      if (text[i]===richText[j]) map[j++] = i;
-    }
-    return map;
-  }
-
-  var nextNode = function(node) {
-    outer: while (node) {
-      var sibling = node.nextSibling;
-//       console.log(TAG+'sibling: '+sibling);
-      if (!sibling) {
-        node = node.parentNode;
-//         console.log(TAG+'no sibling. node = '+node);
-        continue;
-      }
-      while (sibling) {
-        if (sibling.nodeType!==Node.TEXT_NODE) {
-          node = sibling;
-          continue outer;
-        }
-        node = sibling;
-        sibling = sibling.firstChild;
-      }
-      return node;
-    }
-    console.error('did not encounter last node while finding next sibling');
-  };
-
-  //calculate caret position
-  var moveTextarea = function(markedDiv) {
-    var range = document.createRange();
-    ['Start', 'End'].forEach(function(suffix) {
-      range['set' + suffix](mirror.childNodes[0], textarea['selection' + suffix] - 1);
-    });
-    var caretPos = {
-      x: range.getClientRects()[0].left
+    //calculate caret position
+    // var moveTextarea = function(markedDiv) {
+    //   var range = document.createRange();
+    //   ['Start', 'End'].forEach(function(suffix) {
+    //     range['set' + suffix](mirror.childNodes[0], textarea['selection' + suffix] - 1);
+    //   });
+    //   var caretPos = {
+    //     x: range.getClientRects()[0].left
+    //   };
+    //   var map = getMapping(markedDiv.textContent);
+    //   debugger;
+    //   var next = nextNode(markedDiv);
+    //   textarea.style.left = markedPos.x - caretPos.x;
+    // }
+    this.props.onInput(text);
+    //calculate equiv RT position
+    //reposition textarea
+    // this.style.position = 
+  },
+  componentDidUpdate: function(prevProps) {
+    if (prevProps.startOffset===this.props.startOffset &&
+        prevProps.endOffset===this.props.endOffset)
+      return;
+    // this.elem.focus();
+    // this.elem.selectionStart = 2//this.props.startOffset;
+    // this.elem.selectionEnd = 5//this.props.endOffset;
+    // this.elem.setSelectionRange(2,5/*this.props.startOffset, this.props.endOffset*/);
+    console.log('document.activeElement: '+document.activeElement);
+  },
+  render: function() {
+    this.style = {
+      marginTop: '4rem',
+      width: 400
     };
-    var map = getMapping(markedDiv.textContent);
-    debugger;
-    var next = nextNode(markedDiv);
-    textarea.style.left = markedPos.x - caretPos.x;
-  }
-  this.props.onInput(textarea.value, moveTextarea);
-  //calculate equiv RT position
-  //reposition textarea
-  // this.style.position = 
-},
-componentDidMount: function() {
-
-},
-render: function() {
-  this.style = {
-    position: 'absolute',
-    top: '4rem',
-    width: '100%'
-  };
-  var textareaStyle = m(this.props.style, {
-    position: 'absolute',
-    top: '1.5rem',
-    resize: 'none',
-    // border: 'none',
-    background: 'transparent',
-    color: 'green',
-    outline: 'none',
-    padding: 0
-  });
-  return (
-    <div style = {this.style}>
+    return (
       <textarea
-        style={textareaStyle}
+        ref={(ref) => this.elem = ref}
+        style={this.style}
         onChange={this.handleChange}
         defaultValue={this.props.text} />
-      <div ref="mirror"
-        style={this.props.style}>
-        {this.props.text}
-      </div>
-    </div>
-  );
-}
-});
-
-var MarkTag = React.createClass({
-  render: function() {
-    this.style = {};
-    return <div style = {this.style}></div>
+    );
   }
 });
 
+var MarkedArea = React.createClass({
+  onClick: function(evt) {
+    var elem = this.refs.marked;
+    var plainText = this.props.text;
+    var map = (function() {
+      var result = [];
+      var j = 0;
+      for(var i = 0, len = plainText.length; i < len; i++) {
+        if (plainText[i]===elem.textContent[j]) result[j++] = i;
+      }
+      return result;
+    })();
+
+    var dive = function(node) {
+      while (node.firstChild) node = node.firstChild;
+      return node;
+    }
+
+    var nextNode = function(node) {
+      while (node) {
+        var sibling = node.nextSibling;
+        if (sibling) return dive(sibling);
+        node = node.parentNode;
+      }
+    };
+
+    var range = getSelection().getRangeAt(0);
+    var textNode = dive(elem);
+    var index = 0;
+    // TODO: inverse range if backwards
+    var getOffset = function(prefix) {
+      var i = 100;
+      while (i--) {
+        if (textNode===range[prefix + 'Container']) {
+          return  index + range[prefix + 'Offset'];
+          break;
+        } else {
+          index += textNode.data.length;
+          textNode = nextNode(textNode);
+        }
+      }
+    };
+    this.props.setSelection(map[getOffset('start')], map[getOffset('end')]);
+
+  },
+  // componentDidUpdate: function(prevProps, prevState) {  },
+  render: function() {
+    this.style = {};
+    return (
+      <div ref="marked"
+        /*style={m(
+          childStyle,
+          { }
+        )}*/
+    onClick={this.onClick}
+        dangerouslySetInnerHTML={this.props.rawMarkup()}/>
+    )
+  }
+});
+
+/*var MarkedTag = React.createClass({
+  render: function() {
+    this.style = {};
+    return <div style={this.style}></div>
+  }
+});*/
 ReactDOM.render(<MarkdownEditor />, document.getElementById('container'));
