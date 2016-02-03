@@ -1,0 +1,2 @@
+Monark (mono markdown portmanteau) is a rich text editor with an invisible UI. It is a demonstration of in-place markdown rendering (as opposed to the traditional two-pane approach). It's a work in progress.
+Check out the [demo](http://willlma.com/monark)
