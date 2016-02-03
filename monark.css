@@ -1,0 +1,19 @@
+.monark div {
+    white-space: pre-wrap;
+    padding: 2rem;
+    outline: none;
+}
+.monark div * {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.monark h1 {
+    line-height: 0.75em;
+}
+.monark textarea {
+    width: 0; height: 0;
+    resize: none;
+    pointer-events: none;
+    outline: none;
+    border: none;
+}
