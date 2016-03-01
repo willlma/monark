@@ -3,6 +3,15 @@
     padding: 2rem;
     outline: none;
 }
+/* .monark div > * {
+    white-space: pre-wrap;
+} */
+.monark ul, .monark ol {
+    white-space: normal;
+}
+.monark li {
+    white-space: pre-wrap;
+}
 .monark div * {
     margin-top: 0;
     margin-bottom: 0;
@@ -13,7 +22,8 @@
 .monark textarea {
     width: 0; height: 0;
     resize: none;
+    /*width: 100%;*/
     pointer-events: none;
     outline: none;
-    border: none;
+     border: none; 
 }

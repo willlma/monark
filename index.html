@@ -10,11 +10,17 @@
   <title>monark</title>
 </head>
 <body>
-  <div>This is a rich text editor with an invisible UI. It is a demonstration of in-place markdown rendering (as opposed to the traditional two-pane approach). It's a work in progress. Type your markdown below.</div>
+  <div contenteditable="true">This is a rich text editor with an invisible UI. It is a demonstration of in-place markdown rendering (as opposed to the traditional two-pane approach). If you don't know about markdown, <a href="http://commonmark.org/help/">here's how it works</a>. It's a work in progress. Type below.</div>
   <script src="marked.min.js"></script>
-  <script src="monark.js"></script>
+  <script type="text/javascript" src="//code.jquery.com/jquery-2.2.1.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/6.0.0/markdown-it.min.js"></script>
+  <script type="text/javascript" src="monark.js"></script>
   <script>
-    var div = monark();
+    var md = markdownit();
+    var div = monark(document.body, function(text) {
+      // return md.render(text);
+      return marked(text, {sanitize: true});
+    });
     div.focus();
   </script>
 </body>

@@ -1,4 +1,5 @@
-var monark = function(parent) {
+var monark = function(parent, render) {
+  var TAG = 'MONARK  ';
   if (!parent) parent = document.body;
   parent.classList.add('monark');
   /*var*/elems = {};
@@ -9,13 +10,16 @@ var monark = function(parent) {
   elems.div.contentEditable = true;
   // elems.div.style.whiteSpace = 'pre';
   elems.textarea.placeholder = 'i *am* me';
-
   var getMap = function() {
     var map = [];
     var plainText = elems.textarea.value;
     var richText = elems.div.textContent;
+    var re = /\w/g, match;
+    /*while((match = re.exec(richText))!==null) {
+      var four = 2+2;
+    }*/
     var j = 0;
-    for(var i = 0, len = plainText.length; i < len; i++) {
+    for (var i = 0, len = plainText.length; i < len; i++) {
       if (plainText[i]===richText[j]) map[j++] = i;
     }
     map.push(plainText.length);
@@ -47,8 +51,8 @@ var monark = function(parent) {
     }  
   }
 
-  var getRange = function(start, end) {
-    var map = getMap();
+  var createRange = function(map) {
+    var start = elems.textarea.selectionStart, end = elems.textarea.selectionEnd
     for (var i = 0, len = map.length; i < len; i++) {
       if (map[i]===start) start = i;
       if (map[i]===end) {
@@ -80,27 +84,51 @@ var monark = function(parent) {
     }
   };
 
-  elems.textarea.addEventListener('input', function(evt) {
-    elems.div.innerHTML = marked(this.value, {sanitize: true});
-    /*[].forEach.call(elems.div.children, function(elem) {
-      elem.style.whiteSpace = 'pre-wrap';
-    });*/
-    var range = getRange(this.selectionStart, this.selectionEnd);
+  var selectRich = function(map) {
+    var range = createRange(map);
     var sel = getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
-    // elems.div.focus();
-  });
-  
-  parent.addEventListener('keydown', function(evt) {
-    // console.dir(evt);
-    if (document.activeElement===elems.textarea) return;
-    if (evt.code.indexOf('Shift')!==-1 || evt.code.indexOf('Arrow')!==-1)
-      return;
-    var map = getMap();
-    // TODO: inverse range if backwards
-    elems.textarea.setSelectionRange(map[getOffset('start')], map[getOffset('end')]);
-    elems.textarea.focus();
+    return range;
+  };
+  (function onKey() {
+    var lastChar, map = [], range;
+    parent.addEventListener('keydown', function(evt) {
+  //     console.dir(evt);
+      if (document.activeElement===elems.textarea) return;
+      if (evt.metaKey || [16, 37, 38, 39, 40].indexOf(evt.keyCode)!==-1) return;
+      range = getSelection().getRangeAt(0);
+      var plainStart = getOffset('start');
+      var richStart = map[plainStart];
+      elems.textarea.setSelectionRange(richStart, map[getOffset('end')]);
+      elems.textarea.focus();
+    });
+    parent.addEventListener('keypress', function(evt) {
+      lastChar = String.fromCharCode(evt.which);
+    }, true);
+    elems.textarea.addEventListener('input', function(evt) {
+      // console.log('input');
+      // if (!lastChar || lastChar.search(/\s/)===-1 && this.selectionStart===this.selectionEnd) {
+      if (lastChar && lastChar===' ' && range.endOffset===range.endContainer.length) {
+        var textNode = range.endContainer;
+        var text = textNode.textContent;
+        textNode.textContent = text.substring(0, range.endOffset)
+          + lastChar + text.substring(range.endOffset);
+      } else {
+        elems.div.innerHTML = render(this.value);       
+      }
+      map = getMap();
+      selectRich(map);
+      /*[].forEach.call(elems.div.children, function(elem) {
+        elem.style.whiteSpace = 'pre-wrap';
+      });*/
+      lastChar = null;
+    });
+  })();
+
+  elems.textarea.addEventListener('select', function() {
+    // console.log('select');
+    if (this.selectionStart!==this.selectionEnd) selectRich();
   });
   return elems.div;
 };
